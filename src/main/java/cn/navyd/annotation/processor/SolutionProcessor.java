@@ -1,6 +1,7 @@
 package cn.navyd.annotation.processor;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -42,36 +43,39 @@ public class SolutionProcessor extends AbstractProcessor {
         TypeElement typeElement = (TypeElement) solutionElement;
         if (processProblemInterface(typeElement, typeElement.getInterfaces()))
           return false;
-        // 处理solution值
-        Solution solution = typeElement.getAnnotation(Solution.class);
-        if (solution == null) {
-          error(solutionElement, "不存在solution注解");
-          return true;
-        }
-        // 处理solution.problem
-        String problemClassName = null;
-        try {
-          problemClassName = solution.problem().getCanonicalName();
-        } catch (MirroredTypeException e) {
-          // 如果problem class为被加载编译，则会抛出异常
-          var mirror = e.getTypeMirror();
-          if (mirror == null)
-            problemClassName = null;
-          else {
-            var ele = (TypeElement)types.asElement(mirror);
-            problemClassName = ele.getQualifiedName().toString();
-          }
-        }
-        // 如果solution.problem与获取接口不一致 除了默认值
-        if (!Object.class.getCanonicalName().equals(problemClassName) 
-            && !solutionInterfaceMap.get(solutionElement)
-            .getQualifiedName().toString()
-            .equals(problemClassName)) {
-          error(solutionElement, "solution.problem:%s非法，实现接口：%s", problemClassName,
-              solutionInterfaceMap.get(solutionElement));
-          return true;
-        }
-          
+    }
+    return false;
+  }
+  
+  @SuppressWarnings({"unused", "deprecation"})
+  private boolean processProblemValue(TypeElement solutionElement) {
+    Solution solution = solutionElement.getAnnotation(Solution.class);
+    if (solution == null) {
+      error(solutionElement, "不存在solution注解");
+      return true;
+    }
+    // 处理solution.problem
+    String problemClassName = null;
+    try {
+      problemClassName = solution.problem().getCanonicalName();
+    } catch (MirroredTypeException e) {
+      // 如果problem class为被加载编译，则会抛出异常
+      var mirror = e.getTypeMirror();
+      if (mirror == null)
+        problemClassName = null;
+      else {
+        var ele = (TypeElement)types.asElement(mirror);
+        problemClassName = ele.getQualifiedName().toString();
+      }
+    }
+    // 如果solution.problem与获取接口不一致 除了默认值
+    if (!Object.class.getCanonicalName().equals(problemClassName) 
+        && !solutionInterfaceMap.get(solutionElement)
+        .getQualifiedName().toString()
+        .equals(problemClassName)) {
+      error(solutionElement, "solution.problem:%s非法，实现接口：%s", problemClassName,
+          solutionInterfaceMap.get(solutionElement));
+      return true;
     }
     return false;
   }
@@ -127,6 +131,6 @@ public class SolutionProcessor extends AbstractProcessor {
   
   @Override
   public Set<String> getSupportedAnnotationTypes() {
-    return new HashSet<>(Arrays.asList(Solution.class.getCanonicalName(), Problem.class.getCanonicalName()));
+    return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(Solution.class.getCanonicalName())));
   }
 }
