@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
@@ -12,15 +11,16 @@ import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.MirroredTypeException;
-import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import cn.navyd.annotation.leetcode.Problem;
 import cn.navyd.annotation.leetcode.Solution;
+import cn.navyd.annotation.util.AnnotationUtils;
 
 public class SolutionProcessor extends AbstractProcessor {
   private Messager messager;
@@ -37,21 +37,39 @@ public class SolutionProcessor extends AbstractProcessor {
   
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-    for (Element solutionElement : roundEnv.getElementsAnnotatedWith(Solution.class)) {
-        if (processAnnotatedKind(solutionElement))
-          return false;
-        TypeElement typeElement = (TypeElement) solutionElement;
-        if (processProblemInterface(typeElement, typeElement.getInterfaces()))
-          return false;
+    boolean hasError = false;
+    for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(Solution.class)) {
+      final TypeElement annotatedTypeElement = (TypeElement) annotatedElement;
+      final AnnotationMirror solutionAnnotationMirror = AnnotationUtils.getAnnotationMirror(annotatedElement, Solution.class);
+      // 仅存在class中
+      if (annotatedElement.getKind() != ElementKind.CLASS) {
+        messager.printMessage(Diagnostic.Kind.ERROR, "仅允许定义在class上", annotatedElement, solutionAnnotationMirror);
+        hasError = true;
+      }
+      
+      // 检查 所有接口 超类是否存在Problem注解
+      var interfaces = AnnotationUtils.getAllInterfaces(annotatedTypeElement);
+      System.out.format("\nannotatedElement: %s, interfaces: %s\n", annotatedElement, interfaces);
+      int annotatedProblemInterfaceCounter = 0;
+      for (var ifEle : interfaces)
+        if (ifEle.getAnnotation(Problem.class) != null)
+          annotatedProblemInterfaceCounter++;
+      if (annotatedProblemInterfaceCounter == 0) {
+        messager.printMessage(Diagnostic.Kind.ERROR, "不存在任何接口注解@Problem", annotatedElement, solutionAnnotationMirror);
+        hasError = true;
+      } else if (annotatedProblemInterfaceCounter > 1) {
+        messager.printMessage(Diagnostic.Kind.ERROR, "存在多个接口注解@Problem。", annotatedElement, solutionAnnotationMirror);
+        hasError = true;
+      }
     }
-    return false;
+    return hasError;
   }
   
   @SuppressWarnings({"unused", "deprecation"})
   private boolean processProblemValue(TypeElement solutionElement) {
     Solution solution = solutionElement.getAnnotation(Solution.class);
     if (solution == null) {
-      error(solutionElement, "不存在solution注解");
+//      error(solutionElement, "不存在solution注解");
       return true;
     }
     // 处理solution.problem
@@ -73,55 +91,11 @@ public class SolutionProcessor extends AbstractProcessor {
         && !solutionInterfaceMap.get(solutionElement)
         .getQualifiedName().toString()
         .equals(problemClassName)) {
-      error(solutionElement, "solution.problem:%s非法，实现接口：%s", problemClassName,
-          solutionInterfaceMap.get(solutionElement));
+//      error(solutionElement, "solution.problem:%s非法，实现接口：%s", problemClassName,
+//          solutionInterfaceMap.get(solutionElement));
       return true;
     }
     return false;
-  }
-  
-  // 仅允许注解到class上
-  private boolean processAnnotatedKind(Element solutionElement) {
-    if (solutionElement.getKind() == ElementKind.CLASS) {
-      return false;
-    }
-    error(solutionElement, "仅允许注解到class");
-    return true;
-  }
-  
-  /**
-   * 处理problem接口元素。检查指定接口是否有且仅有一个实现了@Problem
-   * @param solutionElement
-   * @param problemInterfaces
-   * @return
-   */
-  private boolean processProblemInterface(TypeElement solutionElement, List<? extends TypeMirror> problemInterfaces) {
-    for (TypeMirror type : problemInterfaces) {
-      final var problemInterface = (TypeElement)types.asElement(type);
-      var problem = problemInterface.getAnnotation(Problem.class);
-      // 如果存在多个@problem接口
-      if (solutionInterfaceMap.containsKey(solutionElement)) {
-        error(solutionElement, "仅允许存在一个@problem的接口");
-        return true;
-      } 
-      // 存在@problem
-      else if (problem != null) {
-        solutionInterfaceMap.put(solutionElement, problemInterface);
-      }
-    }
-    // 如果不存在@problem接口
-    if (!solutionInterfaceMap.containsKey(solutionElement)) {
-      error(solutionElement, "不存在一个@problem的接口");
-      return true;
-    }
-    return false;
-  }
-  
-  private void error(Element e, String msg, Object... args) {
-    messager.printMessage(
-        Diagnostic.Kind.ERROR,
-        String.format(msg, args),
-        e);
   }
   
   @Override
