@@ -1,8 +1,8 @@
 package cn.navyd.annotation.processor;
 
-import static cn.navyd.annotation.util.MyUtils.getAnnotationMirror;
-import static cn.navyd.annotation.util.MyUtils.getAnnotationValueByName;
-import static cn.navyd.annotation.util.MyUtils.isUrl;
+import static cn.navyd.annotation.util.AnnotationUtils.getAnnotationMirror;
+import static cn.navyd.annotation.util.AnnotationUtils.getAnnotationValueByName;
+import static cn.navyd.annotation.util.AnnotationUtils.isUrl;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
