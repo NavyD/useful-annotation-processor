@@ -18,6 +18,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 import cn.navyd.annotation.leetcode.Problem;
+import cn.navyd.annotation.leetcode.Problem.Tag;
 
 public class ProblemProcessor extends AbstractProcessor {
   private Messager messager;
@@ -58,8 +59,26 @@ public class ProblemProcessor extends AbstractProcessor {
         messager.printMessage(Diagnostic.Kind.ERROR, "非法的 url", problemElement, problemAnnotationMirror, value);
         hasError = true;
       }
+      
+      // 检查tag是否
+      if (!isValidTag(problem, problemElement, problemAnnotationMirror, "tags"))
+        hasError = true;
     }
     return hasError;
+  }
+  
+  private boolean isValidTag(Problem problem, Element element, AnnotationMirror mirror, String name) {
+    final var value = getAnnotationValueByName(mirror, name);
+    Tag[] tags = problem.tags();
+    if (tags.length != 1) {
+      messager.printMessage(Diagnostic.Kind.ERROR, "仅支持一个tag", element, mirror, value);
+      return false;
+    }
+    Tag tag = tags[0];
+    if (!tag.isStandard()) {
+      messager.printMessage(Diagnostic.Kind.ERROR, "仅支持标准的tag", element, mirror, value);
+    }
+    return true;
   }
   
   @Override
