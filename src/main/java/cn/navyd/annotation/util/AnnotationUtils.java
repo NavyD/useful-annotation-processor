@@ -23,6 +23,12 @@ public class AnnotationUtils {
   
   private static final Map<TypeElement, Set<TypeElement>> CACHED_INTERFACES = new HashMap<>(50);
   
+  /**
+   * @deprecated {@link CheckerUtil#isUrl(String)}
+   * @param url
+   * @return
+   */
+  @Deprecated
   public static boolean isUrl(String url) {
     if (url == null | url.isBlank())
       return false;
@@ -76,8 +82,6 @@ public class AnnotationUtils {
     }
     return null;
   }
-  
-  
   
   /**
    * 通过指定的name从AnnotationMirror中获取AnnotationValue
