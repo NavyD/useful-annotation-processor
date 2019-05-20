@@ -26,6 +26,12 @@ public class CheckerUtil {
   }
   
   public static void errorMessage(Messager messager, Element element, AnnotationMirror mirror, 
+      String message, Object... args) {
+    messager.printMessage(Diagnostic.Kind.ERROR, String.format(message, args), 
+        element, mirror);
+  }
+  
+  public static void errorMessage(Messager messager, Element element, AnnotationMirror mirror, 
       AnnotationValue value, String message, Object... args) {
     messager.printMessage(Diagnostic.Kind.ERROR, String.format(message, args), 
         element, mirror, value);

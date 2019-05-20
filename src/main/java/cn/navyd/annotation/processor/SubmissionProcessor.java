@@ -11,10 +11,8 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
-import javax.tools.Diagnostic;
 import cn.navyd.annotation.checker.AnnotationChecker;
 import cn.navyd.annotation.checker.SubmissionChecker;
-import cn.navyd.annotation.leetcode.Solution;
 import cn.navyd.annotation.leetcode.Submission;
 
 public class SubmissionProcessor extends AbstractProcessor {
@@ -32,17 +30,9 @@ public class SubmissionProcessor extends AbstractProcessor {
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
     boolean hasError = false;
     for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(Submission.class)) {
-      System.out.format("\nannotatedElement: %s\n\n", annotatedElement);
-      // 检查是否存在solution注解
-      if (annotatedElement.getAnnotation(Solution.class) == null) {
-        System.out.format("不存在solution注解\n");
-        messager.printMessage(Diagnostic.Kind.ERROR, "当前注解class不存在solution注解", annotatedElement);
-        hasError = true;
-        continue;
-      }
       // 注意注解与容器注解间是互斥关系，只能同时存在一个
       try {
-          hasError = !checker.check(Submission.class, annotatedElement);
+          hasError = !checker.check(annotatedElement);
       } catch (RuntimeException e) {
         e.printStackTrace();
         hasError = true;
