@@ -11,15 +11,18 @@ import javax.annotation.processing.Messager;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.tools.Diagnostic;
+import cn.navyd.annotation.leetcode.Solution;
 import cn.navyd.annotation.leetcode.Submission;
 import cn.navyd.annotation.util.RangeException;
 
 public class SubmissionChecker extends AbstractAnnotationChecker<Submission> {
   private static final DateTimeFormatter DEFAULT_DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
   private DateTimeFormatter dateFormatter = DEFAULT_DATE_FORMATTER;
+  private final Messager messager;
   
   public SubmissionChecker(Messager messager) {
-    super(messager);
+    super(Submission.class);
+    this.messager = messager;
   }
   
   public DateTimeFormatter getDateFormatter() {
@@ -33,12 +36,28 @@ public class SubmissionChecker extends AbstractAnnotationChecker<Submission> {
   @Override
   public boolean doCheck(Submission annotation, Element element, AnnotationMirror annotationMirror)
       throws RuntimeException {
-    return checkDate(annotation, element, annotationMirror) 
-        && checkRuntime(annotation, element, annotationMirror)
-        && checkRuntimeBeatRate(annotation, element, annotationMirror)
-        && checkMemory(annotation, element, annotationMirror)
-        && checkMemoryBeatRate(annotation, element, annotationMirror)
-        && checkUrl(annotation, element, annotationMirror);
+    return checkSolution(annotation, element, annotationMirror)
+        & checkDate(annotation, element, annotationMirror) 
+        & checkRuntime(annotation, element, annotationMirror)
+        & checkRuntimeBeatRate(annotation, element, annotationMirror)
+        & checkMemory(annotation, element, annotationMirror)
+        & checkMemoryBeatRate(annotation, element, annotationMirror)
+        & checkUrl(annotation, element, annotationMirror);
+  }
+  
+  /**
+   * 检查submission注解上是否存在solution注解
+   * @param annotation
+   * @param element
+   * @param annotationMirror
+   * @return
+   */
+  private boolean checkSolution(Submission annotation, Element element, AnnotationMirror annotationMirror) {
+    if (element.getAnnotation(Solution.class) == null) {
+      errorMessage(messager, element, annotationMirror, "不存在solution注解");
+      return false;
+    }
+    return true;
   }
   
   /**
@@ -83,10 +102,10 @@ public class SubmissionChecker extends AbstractAnnotationChecker<Submission> {
   private boolean checkRuntime(Submission submission, Element element, AnnotationMirror mirror) {
     final String name = "runtime";
     final int runtime = submission.runtime(), min = 0;
-    final var annotationValue = getAnnotationValueByName(mirror, name);
     try {
       checkRange(runtime, min, null);
     } catch (RangeException e) {
+      var annotationValue = getAnnotationValueByName(mirror, name);
       errorMessage(messager, element, mirror, annotationValue, "最小值为：%s", Integer.valueOf(min));
       return false;
     }
@@ -96,10 +115,10 @@ public class SubmissionChecker extends AbstractAnnotationChecker<Submission> {
   private boolean checkRuntimeBeatRate(Submission submission, Element element, AnnotationMirror mirror) {
     final String name = "runtimeBeatRate";
     final double runtimeBeatRate = submission.runtimeBeatRate(), min = 0, max = 100;
-    final var annotationValue = getAnnotationValueByName(mirror, name);
     try {
       checkRange(runtimeBeatRate, min, max);
     } catch (RangeException e) {
+      var annotationValue = getAnnotationValueByName(mirror, name);
       if (e.isUpperOrLowerBound())
         errorMessage(messager, element, mirror, annotationValue, "最大值为：%s", max);
       else 
@@ -112,10 +131,10 @@ public class SubmissionChecker extends AbstractAnnotationChecker<Submission> {
   private boolean checkMemory(Submission submission, Element element, AnnotationMirror mirror) {
     final String name = "memory";
     final double memory = submission.memory(), min = 0;
-    final var annotationValue = getAnnotationValueByName(mirror, name);
     try {
       checkRange(memory, min, null);
     } catch (RangeException e) {
+      var annotationValue = getAnnotationValueByName(mirror, name);
       errorMessage(messager, element, mirror, annotationValue, "最小值为：%s", min);
       return false;
     }
@@ -123,12 +142,12 @@ public class SubmissionChecker extends AbstractAnnotationChecker<Submission> {
   }
   
   private boolean checkMemoryBeatRate(Submission submission, Element element, AnnotationMirror mirror) {
-    final String name = "runtimeBeatRate";
+    final String name = "memoryBeatRate";
     final double memoryBeatRate = submission.memoryBeatRate(), min = 0, max = 100;
-    final var annotationValue = getAnnotationValueByName(mirror, name);
     try {
       checkRange(memoryBeatRate, min, max);
     } catch (RangeException e) {
+      var annotationValue = getAnnotationValueByName(mirror, name);
       if (e.isUpperOrLowerBound())
         errorMessage(messager, element, mirror, annotationValue, "最大值为：%s", max);
       else 
@@ -140,8 +159,8 @@ public class SubmissionChecker extends AbstractAnnotationChecker<Submission> {
   
   private boolean checkUrl(Submission submission, Element element, AnnotationMirror mirror) {
     final String name = "url", url = submission.url();
-    final var annotationValue = getAnnotationValueByName(mirror, name);
     if (!isUrl(url)) {
+      var annotationValue = getAnnotationValueByName(mirror, name);
       errorMessage(messager, element, mirror, annotationValue, "非法的url");
       return false;
     }

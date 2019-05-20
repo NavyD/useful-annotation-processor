@@ -2,23 +2,21 @@ package cn.navyd.annotation.checker;
 
 import static cn.navyd.annotation.util.AnnotationUtils.getAnnotationMirror;
 import java.lang.annotation.Annotation;
-import javax.annotation.processing.Messager;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.type.MirroredTypeException;
 
 public abstract class AbstractAnnotationChecker<T extends Annotation> implements AnnotationChecker<T> {
-  protected final Messager messager;
+  protected final Class<T> annotationClazz;
   
-  public AbstractAnnotationChecker(Messager messager) {
-    this.messager = messager;
-  }
-  
-  @Override
-  public boolean check(Class<T> annotationClazz, Element element)
-      throws RuntimeException {
+  public AbstractAnnotationChecker(Class<T> annotationClazz) {
     if (annotationClazz == null)
       throw new NullPointerException("annotationClazz is null");
+    this.annotationClazz = annotationClazz;
+  }
+    
+  @Override
+  public boolean check(Element element) throws RuntimeException {
     if (element == null)
       throw new NullPointerException("element is null");
     T annotation = null;

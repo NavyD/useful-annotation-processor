@@ -13,5 +13,5 @@ public interface AnnotationChecker<T extends Annotation> {
    * @return
    * @throws RuntimeException
    */
-  boolean check(Class<T> annotationClazz , Element element) throws RuntimeException;
+  boolean check(Element element) throws RuntimeException;
 }
