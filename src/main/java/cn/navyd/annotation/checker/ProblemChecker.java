@@ -9,11 +9,11 @@ import javax.annotation.processing.Messager;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.TypeElement;
 import cn.navyd.annotation.leetcode.Problem;
 import cn.navyd.annotation.leetcode.Problem.Tag;
 import cn.navyd.annotation.util.AnnotationUtils;
 import cn.navyd.annotation.util.RangeException;
-import cn.navyd.annotation.util.StringSeparatorBuilder;
 
 public class ProblemChecker extends AbstractAnnotationChecker<Problem> {
   private final Messager messager;
@@ -24,7 +24,7 @@ public class ProblemChecker extends AbstractAnnotationChecker<Problem> {
   }
 
   @Override
-  protected boolean doCheck(Problem annotation, Element element, AnnotationMirror mirror) {
+  protected boolean doCheck(Problem annotation, TypeElement element, AnnotationMirror mirror) {
     return checkElementKind(element, mirror)
         & checkNumber(annotation, element, mirror)
         & checkUrl(annotation, element, mirror)
@@ -73,19 +73,21 @@ public class ProblemChecker extends AbstractAnnotationChecker<Problem> {
   private boolean checkTags(Problem annotation, Element element, AnnotationMirror mirror) {
     final String name = "tags";
     final var value = AnnotationUtils.getAnnotationValueByName(mirror, name);
-    StringSeparatorBuilder repeatedTagsMsg = StringSeparatorBuilder.of(", ");
-    final Set<Tag> errorTags = new HashSet<>();
+    final Set<Tag> tags = new HashSet<>();
+    boolean hasRepeatedTag = false, hasUnStandardTag = false;
     for (Tag tag : annotation.tags())
-      if (!errorTags.add(tag)) {
-        repeatedTagsMsg.append(tag);
+      if (!tags.add(tag)) {
+        hasRepeatedTag = true;
+        break;
       }
-    if (repeatedTagsMsg.length() > 0)
-      errorMessage(messager, element, mirror, value, "存在重复的tags：%s", repeatedTagsMsg);
     // 移除正常的tags
-    errorTags.removeIf(tag -> tag.isStandard());
-    if (!errorTags.isEmpty())
-      errorMessage(messager, element, mirror, value, "不标准的tag:%s", errorTags);
-    return errorTags.isEmpty();
+    tags.removeIf(tag -> tag.isStandard());
+    hasUnStandardTag = !tags.isEmpty();
+    String msg = (hasRepeatedTag ? "存在重复的tags." : "") + (hasUnStandardTag ? "存在不标准的tags." : "");
+    if (msg.isEmpty())
+      return true;
+    errorMessage(messager, element, mirror, value, msg);
+    return false;
   }
 
 }

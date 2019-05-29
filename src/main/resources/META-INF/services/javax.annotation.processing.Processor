@@ -1,3 +1,4 @@
 cn.navyd.annotation.processor.SolutionProcessor
 cn.navyd.annotation.processor.ProblemProcessor
 cn.navyd.annotation.processor.SubmissionProcessor
+cn.navyd.annotation.processor.SubmissionsProcessor

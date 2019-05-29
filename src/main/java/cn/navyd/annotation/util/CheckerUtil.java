@@ -6,6 +6,7 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.tools.Diagnostic;
+import static cn.navyd.annotation.util.AnnotationUtils.*;
 
 public class CheckerUtil {
   
@@ -23,6 +24,15 @@ public class CheckerUtil {
       throw new RangeException(false);
     else if (max != null && value.compareTo(max) > 0)
       throw new RangeException(true);
+  }
+  
+  public static boolean isDefaultValue(AnnotationMirror mirror, String simpleName, Object value) {
+    return isDefaultValue(mirror.getAnnotationType().asElement(), simpleName, value);
+  }
+  
+  public static boolean isDefaultValue(Element element, String simpleName, Object value) {
+    var defaultValue = getDefaultValueByMethodName(element, simpleName);
+    return defaultValue.isPresent() && defaultValue.get().getValue().equals(value);
   }
   
   public static void errorMessage(Messager messager, Element element, AnnotationMirror mirror, 

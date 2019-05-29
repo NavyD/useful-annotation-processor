@@ -1,6 +1,8 @@
 package cn.navyd.annotation.checker;
 
 import java.lang.annotation.Annotation;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 
 public interface AnnotationChecker<T extends Annotation> {
@@ -14,4 +16,8 @@ public interface AnnotationChecker<T extends Annotation> {
    * @throws RuntimeException
    */
   boolean check(Element element) throws RuntimeException;
+  
+  boolean check(T annotation, Element element, AnnotationMirror mirror);
+  
+//  boolean check(T annotation, Element element, AnnotationMirror mirror, AnnotationValue value);
 }

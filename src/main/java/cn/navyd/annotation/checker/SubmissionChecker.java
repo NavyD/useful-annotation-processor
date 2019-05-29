@@ -1,15 +1,14 @@
 package cn.navyd.annotation.checker;
 
-import static cn.navyd.annotation.util.AnnotationUtils.getAnnotationValueByName;
-import static cn.navyd.annotation.util.CheckerUtil.checkRange;
-import static cn.navyd.annotation.util.CheckerUtil.errorMessage;
-import static cn.navyd.annotation.util.CheckerUtil.isUrl;
+import static cn.navyd.annotation.util.AnnotationUtils.*;
+import static cn.navyd.annotation.util.CheckerUtil.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 import cn.navyd.annotation.leetcode.Solution;
 import cn.navyd.annotation.leetcode.Submission;
@@ -34,7 +33,7 @@ public class SubmissionChecker extends AbstractAnnotationChecker<Submission> {
   }
 
   @Override
-  public boolean doCheck(Submission annotation, Element element, AnnotationMirror annotationMirror)
+  public boolean doCheck(Submission annotation, TypeElement element, AnnotationMirror annotationMirror)
       throws RuntimeException {
     return checkSolution(annotation, element, annotationMirror)
         & checkDate(annotation, element, annotationMirror) 
@@ -103,10 +102,12 @@ public class SubmissionChecker extends AbstractAnnotationChecker<Submission> {
     final String name = "runtime";
     final int runtime = submission.runtime(), min = 0;
     try {
-      checkRange(runtime, min, null);
+      // 检查默认值 和 范围
+      if (!isDefaultValue(mirror, name, runtime))
+        checkRange(runtime, min, null);
     } catch (RangeException e) {
       var annotationValue = getAnnotationValueByName(mirror, name);
-      errorMessage(messager, element, mirror, annotationValue, "最小值为：%s", Integer.valueOf(min));
+      errorMessage(messager, element, mirror, annotationValue, "%s最小值为：%s", name, Integer.valueOf(min));
       return false;
     }
     return true;
@@ -116,13 +117,14 @@ public class SubmissionChecker extends AbstractAnnotationChecker<Submission> {
     final String name = "runtimeBeatRate";
     final double runtimeBeatRate = submission.runtimeBeatRate(), min = 0, max = 100;
     try {
-      checkRange(runtimeBeatRate, min, max);
+      if (!isDefaultValue(mirror, name, runtimeBeatRate))
+        checkRange(runtimeBeatRate, min, max);
     } catch (RangeException e) {
       var annotationValue = getAnnotationValueByName(mirror, name);
       if (e.isUpperOrLowerBound())
-        errorMessage(messager, element, mirror, annotationValue, "最大值为：%s", max);
+        errorMessage(messager, element, mirror, annotationValue, "%s最大值为：%s", name, max);
       else 
-        errorMessage(messager, element, mirror, annotationValue, "最小值为：%s", min);
+        errorMessage(messager, element, mirror, annotationValue, "%s最小值为：%s", name, min);
       return false;
     }
     return true;
@@ -132,10 +134,11 @@ public class SubmissionChecker extends AbstractAnnotationChecker<Submission> {
     final String name = "memory";
     final double memory = submission.memory(), min = 0;
     try {
-      checkRange(memory, min, null);
+      if (!isDefaultValue(mirror, name, memory))
+        checkRange(memory, min, null);
     } catch (RangeException e) {
       var annotationValue = getAnnotationValueByName(mirror, name);
-      errorMessage(messager, element, mirror, annotationValue, "最小值为：%s", min);
+      errorMessage(messager, element, mirror, annotationValue, "%s最小值为：%s", name, min);
       return false;
     }
     return true;
@@ -145,13 +148,14 @@ public class SubmissionChecker extends AbstractAnnotationChecker<Submission> {
     final String name = "memoryBeatRate";
     final double memoryBeatRate = submission.memoryBeatRate(), min = 0, max = 100;
     try {
-      checkRange(memoryBeatRate, min, max);
+      if (!isDefaultValue(mirror, name, memoryBeatRate))
+        checkRange(memoryBeatRate, min, max);
     } catch (RangeException e) {
       var annotationValue = getAnnotationValueByName(mirror, name);
       if (e.isUpperOrLowerBound())
-        errorMessage(messager, element, mirror, annotationValue, "最大值为：%s", max);
+        errorMessage(messager, element, mirror, annotationValue, "%s最大值为：%s", name, max);
       else 
-        errorMessage(messager, element, mirror, annotationValue, "最小值为：%s", min);
+        errorMessage(messager, element, mirror, annotationValue, "%s最小值为：%s", name, min);
       return false;
     }
     return true;
@@ -166,5 +170,4 @@ public class SubmissionChecker extends AbstractAnnotationChecker<Submission> {
     }
     return true;
   }
-
 }
